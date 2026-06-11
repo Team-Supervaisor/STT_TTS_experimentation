@@ -53,6 +53,58 @@ import tts_common as common
 logger = logging.getLogger(__name__)
 
 
+def _ensure_nltk_g2p_en_tagger() -> None:
+    """Ensure NLTK tagger data needed by `g2p_en` is available.
+
+    `g2p_en` calls `nltk.pos_tag()`, which requires the averaged perceptron tagger
+    data to be present. We try to auto-download it into a repo-local directory.
+    """
+
+    # Only import/download when needed.
+    try:
+        import nltk
+    except Exception as e:  # pragma: no cover
+        raise RuntimeError(
+            "English G2P requires `nltk` (a dependency of g2p_en), but it could not be imported."
+        ) from e
+
+    data_dir = (Path(__file__).resolve().parent / ".nltk_data")
+    data_dir.mkdir(parents=True, exist_ok=True)
+
+    # Ensure our local dir is searched first (and works even without $HOME).
+    if str(data_dir) not in nltk.data.path:
+        nltk.data.path.insert(0, str(data_dir))
+
+    def _tagger_ready() -> bool:
+        try:
+            from nltk.tag.perceptron import PerceptronTagger
+
+            PerceptronTagger()  # triggers resource lookup
+            return True
+        except LookupError:
+            return False
+
+    if _tagger_ready():
+        return
+
+    # Try to download quietly; if offline, we'll raise with actionable guidance.
+    # NLTK versions differ on whether they want *_eng or the legacy name, so try both.
+    for pkg in ("averaged_perceptron_tagger_eng", "averaged_perceptron_tagger"):
+        try:
+            nltk.download(pkg, download_dir=str(data_dir), quiet=True)
+        except Exception:
+            # Downloader often returns False rather than raising; ignore and re-check.
+            pass
+        if _tagger_ready():
+            return
+
+    raise RuntimeError(
+        "Missing NLTK tagger data needed by g2p_en. Run:\n"
+        f"  {sys.executable} -c \"import nltk; nltk.download('averaged_perceptron_tagger_eng'); nltk.download('averaged_perceptron_tagger')\"\n"
+        f"or download into {data_dir} and re-run."
+    )
+
+
 # -----------------------------
 # Audio helpers
 # -----------------------------
@@ -452,6 +504,10 @@ def main(argv: Optional[list[str]] = None) -> int:
     p.add_argument("--rel-paths", action="store_true", help="Store audio paths relative to out-dir in JSONL")
 
     args = p.parse_args(argv)
+
+    language = str(args.language).strip().upper()
+    if language == "EN":
+        _ensure_nltk_g2p_en_tagger()
 
     out_dir = Path(args.out_dir)
     wav_dir = out_dir / "wavs"

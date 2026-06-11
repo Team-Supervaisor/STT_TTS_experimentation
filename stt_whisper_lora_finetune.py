@@ -62,11 +62,15 @@ def _resolve_audio_path(p: str, *, audio_root: Path) -> str:
 @dataclass
 class DataCollatorSpeechSeq2SeqWithPadding:
     processor: Any
+    input_dtype: Any = None
 
     def __call__(self, features: list[dict[str, Any]]) -> dict[str, Any]:
-        # input_features: already float32 log-mels, shape (80, n_frames)
+        # input_features: log-mels, shape (80, n_frames)
         input_features = [{"input_features": f["input_features"]} for f in features]
         batch = self.processor.feature_extractor.pad(input_features, return_tensors="pt")
+
+        if self.input_dtype is not None:
+            batch["input_features"] = batch["input_features"].to(dtype=self.input_dtype)
 
         label_features = [{"input_ids": f["labels"]} for f in features]
         labels_batch = self.processor.tokenizer.pad(label_features, return_tensors="pt")
@@ -149,6 +153,10 @@ def main(argv: list[str] | None = None) -> int:
     except Exception:
         _require("torch", "Install torch for your CUDA/CPU setup")
 
+    # Precision: default to BF16 on CUDA (ideal for H100) unless you explicitly ask for FP16.
+    use_bf16 = bool(args.bf16) or (has_cuda and not bool(args.fp16))
+    use_fp16 = bool(args.fp16) and not use_bf16
+
     try:
         from datasets import Audio, load_dataset
     except Exception:
@@ -157,14 +165,23 @@ def main(argv: list[str] | None = None) -> int:
             "uv pip install -U datasets --python /home/pragay/WWAI/.venv/bin/python",
         )
 
+    # transformers' Whisper stack imports audio utilities that require `soxr`.
+    try:
+        import soxr  # noqa: F401
+    except Exception:
+        _require("soxr", "uv pip install -U soxr")
+
     try:
         from transformers.models.whisper import WhisperForConditionalGeneration, WhisperProcessor
         from transformers.trainer_seq2seq import Seq2SeqTrainer
         from transformers.training_args_seq2seq import Seq2SeqTrainingArguments
-    except Exception:
+    except Exception as e:
+        # Avoid misreporting optional sub-deps (e.g., soxr) as missing transformers.
+        if isinstance(e, ModuleNotFoundError) and getattr(e, "name", None) == "soxr":
+            _require("soxr", "uv pip install -U soxr")
         _require(
             "transformers",
-            "uv pip install -U transformers accelerate --python /home/pragay/WWAI/.venv/bin/python",
+            "uv pip install -U transformers accelerate",
         )
 
     try:
@@ -223,6 +240,14 @@ def main(argv: list[str] | None = None) -> int:
     )
     model = get_peft_model(model, lora)
 
+    # Ensure model weights dtype matches the precision mode, so generation (which
+    # may run outside autocast) doesn't hit dtype mismatches in conv layers.
+    if has_cuda:
+        if use_bf16:
+            model = model.to(dtype=torch.bfloat16)
+        elif use_fp16:
+            model = model.to(dtype=torch.float16)
+
     # Dataset audio decoding + feature extraction
     ds = ds.cast_column("audio", Audio(sampling_rate=16000))
 
@@ -257,7 +282,13 @@ def main(argv: list[str] | None = None) -> int:
     if "eval" in ds and int(args.max_eval_samples) > 0 and len(ds["eval"]) > int(args.max_eval_samples):
         ds["eval"] = ds["eval"].shuffle(seed=int(args.seed)).select(range(int(args.max_eval_samples)))
 
-    collator = DataCollatorSpeechSeq2SeqWithPadding(processor=processor)
+    out_dir = Path(args.output_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    # Keep input dtype consistent with model weights under fp16/bf16 to avoid
+    # float32 inputs hitting half-precision conv layers during generation.
+    input_dtype = torch.bfloat16 if use_bf16 else (torch.float16 if use_fp16 else None)
+    collator = DataCollatorSpeechSeq2SeqWithPadding(processor=processor, input_dtype=input_dtype)
 
     wer = evaluate.load("wer")
 
@@ -272,13 +303,6 @@ def main(argv: list[str] | None = None) -> int:
         label_str = processor.tokenizer.batch_decode(label_ids, skip_special_tokens=True)
 
         return {"wer": float(wer.compute(predictions=pred_str, references=label_str))}
-
-    out_dir = Path(args.output_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
-
-    # Precision: default to BF16 on CUDA (ideal for H100) unless you explicitly ask for FP16.
-    use_bf16 = bool(args.bf16) or (has_cuda and not bool(args.fp16))
-    use_fp16 = bool(args.fp16) and not use_bf16
 
     ta_kwargs: dict[str, Any] = {
         "output_dir": str(out_dir),
@@ -301,16 +325,27 @@ def main(argv: list[str] | None = None) -> int:
         "seed": int(args.seed),
     }
 
+    # transformers renamed `evaluation_strategy` -> `eval_strategy` in newer versions.
+    import inspect
+
+    _ta_params = set(inspect.signature(Seq2SeqTrainingArguments.__init__).parameters)
+    if "evaluation_strategy" in _ta_params:
+        _eval_key = "evaluation_strategy"
+    elif "eval_strategy" in _ta_params:
+        _eval_key = "eval_strategy"
+    else:
+        _eval_key = "evaluation_strategy"
+
     if "eval" in ds:
         ta_kwargs.update(
             {
-                "evaluation_strategy": "steps",
+                _eval_key: "steps",
                 "eval_steps": int(args.save_steps),
                 "predict_with_generate": True,
             }
         )
     else:
-        ta_kwargs.update({"evaluation_strategy": "no", "predict_with_generate": False})
+        ta_kwargs.update({_eval_key: "no", "predict_with_generate": False})
 
     train_args = Seq2SeqTrainingArguments(**ta_kwargs)
 

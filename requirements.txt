@@ -8,6 +8,11 @@ soundfile
 # Phonemes
 g2p_en
 
+# Whisper/Transformers audio utilities
+soxr
+# HF datasets Audio decoding backend (required by newer `datasets`)
+torchcodec
+
 # Coqui TTS (VITS / many local models)
 TTS
 
