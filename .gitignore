@@ -209,3 +209,7 @@ datasets/
 data/
 .nltk_data
 outputs/
+
+# MuseTalk realtime avatar (cloned repo, venv, weights, results)
+MuseTalk/
+realtime_avatar/_wstest_out/

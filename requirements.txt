@@ -16,6 +16,9 @@ torchcodec
 # Coqui TTS (VITS / many local models)
 TTS
 
+# Chatterbox (Resemble AI) zero-shot TTS + voice cloning
+chatterbox-tts
+
 # VoXtream2 (optional; requires system dependency `espeak-ng`)
 # voxtream>=0.2
 

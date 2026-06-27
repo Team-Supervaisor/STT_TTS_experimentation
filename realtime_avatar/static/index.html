@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Realtime MuseTalk Avatar</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; font-family: system-ui, sans-serif; background: #0e0f13; color: #e7e9ee; }
+  .wrap { max-width: 920px; margin: 0 auto; padding: 20px; }
+  h1 { font-size: 18px; font-weight: 600; margin: 0 0 14px; }
+  .stage { display: flex; gap: 20px; flex-wrap: wrap; }
+  .video { flex: 0 0 auto; }
+  canvas { background: #000; border-radius: 12px; width: 360px; height: auto; display: block; }
+  .panel { flex: 1 1 320px; min-width: 300px; }
+  textarea { width: 100%; box-sizing: border-box; height: 96px; background: #15171d; color: #e7e9ee;
+             border: 1px solid #2a2d37; border-radius: 10px; padding: 10px; font-size: 14px; resize: vertical; }
+  .row { display: flex; gap: 12px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+  button { background: #4f7cff; color: #fff; border: 0; border-radius: 9px; padding: 10px 18px;
+           font-size: 14px; cursor: pointer; }
+  button:disabled { background: #333845; cursor: not-allowed; }
+  label.small { font-size: 12px; color: #9aa0ad; display: flex; flex-direction: column; gap: 3px; }
+  input[type=range] { width: 130px; }
+  .status { margin-top: 12px; font-size: 13px; color: #9aa0ad; min-height: 18px; white-space: pre-wrap; }
+  .metrics { margin-top: 6px; font-size: 12px; color: #6cd08a; font-family: ui-monospace, monospace; }
+  .err { color: #ff6b6b; }
+  .dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:#555; margin-right:6px; }
+  .dot.on { background:#6cd08a; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1><span id="conn" class="dot"></span>Realtime MuseTalk Avatar — Chatterbox TTS</h1>
+  <div class="stage">
+    <div class="video">
+      <canvas id="cv" width="360" height="540"></canvas>
+    </div>
+    <div class="panel">
+      <textarea id="text" placeholder="Type something for the avatar to say...">Hi! I am a realtime talking avatar. Type anything and I will repeat it back to you, lips and all.</textarea>
+      <div class="row">
+        <label class="small">exaggeration <input id="exag" type="range" min="0.25" max="1.5" step="0.05" value="0.5"></label>
+        <label class="small">cfg_weight <input id="cfg" type="range" min="0.2" max="1.0" step="0.05" value="0.5"></label>
+        <label class="small">temperature <input id="temp" type="range" min="0.5" max="1.2" step="0.05" value="0.8"></label>
+      </div>
+      <div class="row">
+        <button id="speak">Speak</button>
+        <button id="stop" disabled>Stop</button>
+      </div>
+      <div class="row" style="border-top:1px solid #2a2d37; padding-top:10px; margin-top:8px;">
+        <span style="font-size:12px;color:#9aa0ad;">Avatar tuning <span id="avid"></span></span>
+      </div>
+      <div class="row">
+        <label class="small">bbox_shift <b id="bsv">0</b><input id="bbox" type="range" min="-15" max="15" step="1" value="0"></label>
+        <label class="small">extra_margin <b id="emv">10</b><input id="emargin" type="range" min="0" max="40" step="2" value="10"></label>
+        <button id="apply" title="Re-detects and rebuilds the avatar (~40s)">Apply &amp; rebuild</button>
+      </div>
+      <div class="status" id="status">Connecting…</div>
+      <div class="metrics" id="metrics"></div>
+    </div>
+  </div>
+</div>
+<script>
+const cv = document.getElementById('cv');
+const cx = cv.getContext('2d');
+const statusEl = document.getElementById('status');
+const metricsEl = document.getElementById('metrics');
+const speakBtn = document.getElementById('speak');
+const stopBtn = document.getElementById('stop');
+const connDot = document.getElementById('conn');
+const bboxEl = document.getElementById('bbox');
+const emEl = document.getElementById('emargin');
+const bsvEl = document.getElementById('bsv');
+const emvEl = document.getElementById('emv');
+const avidEl = document.getElementById('avid');
+const applyBtn = document.getElementById('apply');
+bboxEl.oninput = () => { bsvEl.textContent = bboxEl.value; };
+emEl.oninput = () => { emvEl.textContent = emEl.value; };
+applyBtn.onclick = () => {
+  if (!ws || ws.readyState !== 1) return;
+  ws.send(JSON.stringify({ type: 'retune', bbox_shift: parseInt(bboxEl.value), extra_margin: parseInt(emEl.value) }));
+  applyBtn.disabled = true; speakBtn.disabled = true;
+  setStatus('Rebuilding avatar (~40s)…');
+};
+
+let audioCtx = null;
+let ws = null;
+let playHead = 0;          // AudioContext time where the next sentence audio starts
+let sentences = new Map(); // idx -> sentence state
+let order = [];            // sentence idx in arrival order
+let speaking = false;
+let doneReceived = false;
+let tSubmit = 0, tFirstAudio = 0, tFirstFrame = 0;
+
+// Idle loop: the avatar keeps moving (its natural head motion) whenever it isn't
+// actively speaking — between sentences and after it finishes — instead of
+// freezing on a static frame.
+let idleBitmaps = [];
+let idleFps = 15;
+let idleReady = false;
+let masterRunning = false;
+
+const idle = new Image();  // single-frame fallback until the loop frames load
+idle.onload = () => { if (!idleReady) { fitCanvas(idle.width, idle.height); cx.drawImage(idle, 0, 0, cv.width, cv.height); } };
+idle.src = '/idle.jpg?' + Date.now();
+
+async function loadIdleLoop() {
+  try {
+    const meta = await (await fetch('/idle_meta')).json();
+    idleFps = meta.fps || 15;
+    const n = meta.n || 0;
+    const bmps = await Promise.all(Array.from({ length: n }, (_, i) =>
+      fetch(`/idle_frame/${i}.jpg`).then(r => r.blob()).then(b => createImageBitmap(b)).catch(() => null)));
+    idleBitmaps = bmps.filter(Boolean);
+    idleReady = idleBitmaps.length > 0;
+  } catch (e) { idleReady = false; }
+  if (!masterRunning) { masterRunning = true; requestAnimationFrame(masterRender); }
+}
+
+function drawBitmap(bmp) { if (!bmp) return; fitCanvas(bmp.width, bmp.height); cx.drawImage(bmp, 0, 0); }
+
+function idleBitmapNow() {
+  if (!idleReady) return null;
+  const p = idleBitmaps.length;
+  if (p === 1) return idleBitmaps[0];
+  const f = Math.floor(performance.now() / 1000 * idleFps) % (2 * p);
+  const i = f < p ? f : (2 * p - 1 - f);   // ping-pong for a seamless loop
+  return idleBitmaps[i];
+}
+
+function fitCanvas(w, h) {
+  // keep internal resolution = source, CSS scales it down
+  if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+}
+
+function setStatus(msg, isErr=false) {
+  statusEl.textContent = msg;
+  statusEl.className = 'status' + (isErr ? ' err' : '');
+}
+
+function connect() {
+  ws = new WebSocket(`ws://${location.host}/ws`);
+  ws.binaryType = 'arraybuffer';
+  ws.onopen = () => { connDot.classList.add('on'); setStatus('Ready. Type text and press Speak.'); };
+  ws.onclose = () => { connDot.classList.remove('on'); setStatus('Disconnected. Reconnecting…'); setTimeout(connect, 1500); };
+  ws.onerror = () => setStatus('WebSocket error', true);
+  ws.onmessage = (ev) => handle(JSON.parse(ev.data));
+}
+
+function b64ToBytes(b64) {
+  const bin = atob(b64);
+  const len = bin.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+
+function handle(msg) {
+  switch (msg.type) {
+    case 'config':
+      bboxEl.value = msg.bbox_shift; bsvEl.textContent = msg.bbox_shift;
+      emEl.value = msg.extra_margin; emvEl.textContent = msg.extra_margin;
+      avidEl.textContent = msg.avatar_id ? `· ${msg.avatar_id} · ${msg.fps || '?'} fps` : '';
+      loadIdleLoop();   // start the idle motion loop
+      break;
+    case 'retuning':  setStatus(`Rebuilding avatar (~40s)… bbox_shift=${msg.bbox_shift} extra_margin=${msg.extra_margin}`); break;
+    case 'retuned':
+      applyBtn.disabled = false; speakBtn.disabled = false;
+      setStatus(`Avatar rebuilt (bbox_shift=${msg.bbox_shift}, extra_margin=${msg.extra_margin}). Press Speak.`);
+      idleReady = false; loadIdleLoop();   // reload the changed avatar's idle frames
+      break;
+    case 'start':     resetPlayback(); break;
+    case 'sentence':  onSentence(msg); break;
+    case 'frame':     onFrame(msg); break;
+    case 'sentence_end': { const s = sentences.get(msg.idx); if (s) s.nFrames = msg.n_frames; break; }
+    case 'done':      onDone(); break;
+    case 'error':     setStatus('Error: ' + msg.message, true); applyBtn.disabled = false; finishSpeaking(); break;
+  }
+}
+
+function resetPlayback() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  sentences = new Map();
+  order = [];
+  doneReceived = false;
+  playHead = audioCtx.currentTime + 0.1;
+  tFirstAudio = 0; tFirstFrame = 0;
+  setStatus('Synthesizing…');
+}
+
+async function onSentence(msg) {
+  const s = {
+    idx: msg.idx, fps: msg.fps, text: msg.text,
+    bitmaps: [], nFrames: null,
+    audioBuffer: null, scheduled: false, startTime: null, duration: 0,
+  };
+  sentences.set(msg.idx, s);
+  order.push(msg.idx);
+  if (!tFirstAudio) { tFirstAudio = performance.now(); }
+  // decode wav
+  try {
+    const bytes = b64ToBytes(msg.audio_b64);
+    s.audioBuffer = await audioCtx.decodeAudioData(bytes.buffer);
+  } catch (e) {
+    setStatus('audio decode failed: ' + e, true);
+    return;
+  }
+  trySchedule();
+  ensureRaf();
+}
+
+function onFrame(msg) {
+  const s = sentences.get(msg.s);
+  if (!s) return;
+  if (!tFirstFrame) {
+    tFirstFrame = performance.now();
+    updateMetrics();
+  }
+  const bytes = b64ToBytes(msg.jpg_b64);
+  const blob = new Blob([bytes], { type: 'image/jpeg' });
+  createImageBitmap(blob).then(bmp => { s.bitmaps[msg.i] = bmp; }).catch(() => {});
+}
+
+function trySchedule() {
+  // schedule sentences in arrival order, gaplessly, once their audio is decoded
+  for (const idx of order) {
+    const s = sentences.get(idx);
+    if (!s || s.scheduled || !s.audioBuffer) continue;
+    // must schedule strictly in order: stop at first not-ready
+    if (playHead < audioCtx.currentTime + 0.02) playHead = audioCtx.currentTime + 0.08;
+    const src = audioCtx.createBufferSource();
+    src.buffer = s.audioBuffer;
+    src.connect(audioCtx.destination);
+    src.start(playHead);
+    s.startTime = playHead;
+    s.duration = s.audioBuffer.duration;
+    s.scheduled = true;
+    playHead += s.duration;
+  }
+}
+
+function currentSentence(t) {
+  for (const idx of order) {
+    const s = sentences.get(idx);
+    if (s && s.scheduled && t >= s.startTime && t < s.startTime + s.duration) return s;
+  }
+  return null;
+}
+
+function ensureRaf() {
+  speaking = true;
+  speakBtn.disabled = true; stopBtn.disabled = false;
+  if (!masterRunning) { masterRunning = true; requestAnimationFrame(masterRender); }
+}
+
+// Always-running loop: draw the lip-synced frame when one is due, otherwise fall
+// back to the idle motion loop (so pauses between sentences and the end of speech
+// keep moving instead of freezing).
+function masterRender() {
+  let drew = false;
+  if (speaking && audioCtx) {
+    const t = audioCtx.currentTime;
+    const s = currentSentence(t);
+    if (s) {
+      const localT = t - s.startTime;
+      const idx = Math.floor(localT * s.fps);
+      let bmp = null;
+      for (let j = Math.min(idx, s.bitmaps.length - 1); j >= 0; j--) {
+        if (s.bitmaps[j]) { bmp = s.bitmaps[j]; break; }
+      }
+      if (bmp) { drawBitmap(bmp); drew = true; }
+    } else {
+      const last = order.length ? sentences.get(order[order.length - 1]) : null;
+      if (doneReceived && last && last.scheduled && t >= last.startTime + last.duration) {
+        finishSpeaking();
+      }
+    }
+  }
+  if (!drew) drawBitmap(idleBitmapNow());   // idle motion fills gaps + idle time
+  requestAnimationFrame(masterRender);
+}
+
+function onDone() {
+  doneReceived = true;
+  updateMetrics();
+}
+
+function finishSpeaking() {
+  speaking = false;
+  speakBtn.disabled = false; stopBtn.disabled = true;
+  setStatus('Done. Ready for the next line.');
+}
+
+function updateMetrics() {
+  const parts = [];
+  if (tFirstAudio) parts.push(`time→first audio: ${((tFirstAudio - tSubmit)/1000).toFixed(2)}s`);
+  if (tFirstFrame) parts.push(`time→first frame: ${((tFirstFrame - tSubmit)/1000).toFixed(2)}s`);
+  metricsEl.textContent = parts.join('   ');
+}
+
+speakBtn.onclick = async () => {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') await audioCtx.resume();
+  const text = document.getElementById('text').value.trim();
+  if (!text || !ws || ws.readyState !== 1) return;
+  tSubmit = performance.now();
+  metricsEl.textContent = '';
+  ws.send(JSON.stringify({
+    type: 'speak',
+    text,
+    exaggeration: parseFloat(document.getElementById('exag').value),
+    cfg_weight: parseFloat(document.getElementById('cfg').value),
+    temperature: parseFloat(document.getElementById('temp').value),
+  }));
+};
+
+stopBtn.onclick = () => { finishSpeaking(); };
+
+connect();
+</script>
+</body>
+</html>

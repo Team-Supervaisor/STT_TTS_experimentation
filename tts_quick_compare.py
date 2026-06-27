@@ -34,6 +34,7 @@ MODEL_TO_SCRIPT = {
     "fishspeech": "tts_fishspeech_15.py",
     "cosyvoice2": "tts_cosyvoice2.py",
     "omnitalker": "tts_omnitalker.py",
+    "chatterbox": "tts_chatterbox.py",
 }
 
 
@@ -72,7 +73,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             cmd.extend(["--prompt-audio", args.voxtream_prompt_audio])
 
         # Propagate device choice only to runners that understand it (local ones).
-        local_runner = m in {"vits", "melotts", "voxtream", "vibevoice"}
+        local_runner = m in {"vits", "melotts", "voxtream", "vibevoice", "chatterbox"}
         if local_runner:
             if args.cpu:
                 cmd.append("--cpu")
