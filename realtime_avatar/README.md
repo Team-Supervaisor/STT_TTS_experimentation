@@ -109,8 +109,10 @@ clock and holds the last frame if generation briefly lags.
 
 ## Integrating into a realtime voice bot
 
-The `MuseTalkEngine.stream_frames(audio)` generator is the integration point.
-Replace the browser front-end with your bot's transport, and replace the
-Chatterbox call with your bot's (ideally **streaming**) TTS, feeding audio chunks
-to the engine. The engine already emits frames per UNet batch, so smaller batches
-= lower latency to first frame.
+See **[INTEGRATION.md](INTEGRATION.md)** for the full step-by-step guide (architecture,
+options, the engine API, audio contract, A/V sync, idle states, and a production
+checklist).
+
+In short: `MuseTalkEngine.stream_frames(audio)` is the integration point. Run it in
+the MuseTalk venv as a separate worker, feed it your bot's TTS audio (per sentence),
+and forward the yielded frames to your client.
