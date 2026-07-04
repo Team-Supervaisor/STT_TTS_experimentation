@@ -1,0 +1,66 @@
+{
+  "config": {
+    "target": "Qwen/Qwen3-4B",
+    "draft": "deepseek-ai/dspark_qwen3_4b_block7",
+    "mode": "both",
+    "load_mode": "4bit",
+    "task": "gsm8k",
+    "num_samples": 4,
+    "warmup": 1,
+    "max_new_tokens": 128,
+    "temperature": 0.0,
+    "gpu": "NVIDIA GeForce RTX 4050 Laptop GPU",
+    "torch": "2.9.1+cu128",
+    "model_load_mem_mb": 4613.5
+  },
+  "phases": {
+    "baseline": {
+      "mode": "baseline",
+      "num_samples": 4,
+      "total_output_tokens": 512,
+      "total_wall_time_s": 21.152,
+      "throughput_tok_s": 24.21,
+      "mean_latency_s": 5.288,
+      "target_forward_passes": 512,
+      "mean_ttft_s": 0.1114,
+      "peak_torch_alloc_mb": 4701.0,
+      "peak_torch_reserved_mb": 4764.7,
+      "gpu": {
+        "available": true,
+        "gpu_util_mean_pct": 56.8,
+        "gpu_util_peak_pct": 74.0,
+        "gpu_mem_used_peak_mb": 5753.9,
+        "power_mean_w": 56.5,
+        "power_peak_w": 59.6,
+        "samples": 421
+      }
+    },
+    "dspark": {
+      "mode": "dspark",
+      "num_samples": 4,
+      "total_output_tokens": 512,
+      "total_wall_time_s": 11.542,
+      "throughput_tok_s": 44.36,
+      "mean_latency_s": 2.885,
+      "target_forward_passes": 96,
+      "mean_acceptance_length": 5.728,
+      "peak_torch_alloc_mb": 4774.2,
+      "peak_torch_reserved_mb": 4878.0,
+      "gpu": {
+        "available": true,
+        "gpu_util_mean_pct": 96.8,
+        "gpu_util_peak_pct": 100.0,
+        "gpu_mem_used_peak_mb": 5867.1,
+        "power_mean_w": 74.0,
+        "power_peak_w": 75.4,
+        "samples": 230
+      }
+    }
+  },
+  "comparison": {
+    "throughput_speedup_x": 1.832,
+    "latency_speedup_x": 1.833,
+    "target_forward_pass_reduction_x": 5.333,
+    "mean_acceptance_length": 5.728
+  }
+}
