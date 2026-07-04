@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Full Gemma-4-12B baseline-vs-DSpark benchmark. Run on a single GPU with >=40 GB
-# VRAM (A100-40GB / L40S-48GB / H100-80GB) for clean BF16 numbers.
+# Full Qwen3-14B baseline-vs-DSpark benchmark. Run on a single GPU with >=40 GB
+# VRAM (Qwen3-14B bf16 ~28 GB + ~3B draft ~6 GB + KV). H100-80GB is comfortable.
 #
-# A 24 GB card (4090 / L4 / A10) can only run this with LOAD_MODE=8bit, which
-# perturbs the target's hidden states and lowers DSpark acceptance -> not a
-# faithful "real" number. Use >=40 GB and BF16 for the headline comparison.
+# Companion to run_cloud_gemma.sh (Gemma-4-12B) and run_local_qwen.sh (6 GB PoC).
+# For other Qwen sizes, override TARGET/DRAFT, e.g.:
+#   TARGET=Qwen/Qwen3-8B DRAFT=deepseek-ai/dspark_qwen3_8b_block7 bash run_cloud_qwen.sh
 set -euo pipefail
 
 # Locate the DeepSpec clone (must contain deepspec/ + benchmark/bench.py). Honors $REPO_DIR.
@@ -17,8 +17,8 @@ fi
 cd "$REPO_DIR"
 source .venv/bin/activate
 
-TARGET="${TARGET:-google/gemma-4-12B-it}"
-DRAFT="${DRAFT:-deepseek-ai/dspark_gemma4_12b_block7}"
+TARGET="${TARGET:-Qwen/Qwen3-14B}"
+DRAFT="${DRAFT:-deepseek-ai/dspark_qwen3_14b_block7}"
 LOAD_MODE="${LOAD_MODE:-bf16}"       # bf16 (>=40GB) | 8bit (24GB, degraded) | 4bit
 TASK="${TASK:-gsm8k}"
 NUM_SAMPLES="${NUM_SAMPLES:-16}"
@@ -26,9 +26,10 @@ MAX_NEW_TOKENS="${MAX_NEW_TOKENS:-512}"
 TEMPERATURE="${TEMPERATURE:-0.0}"    # 0.0 = greedy => DSpark is lossless => clean speedup
 OUT_DIR="${OUT_DIR:-$REPO_DIR/benchmark/results}"
 mkdir -p "$OUT_DIR"
-STAMP="gemma4_12b_${LOAD_MODE}_${TASK}"
+# stamp from the target basename so alternate sizes get distinct files
+STAMP="$(basename "$TARGET" | tr '[:upper:]' '[:lower:]' | tr -d '.')_${LOAD_MODE}_${TASK}"
 
-echo "[download] target + draft (this pulls ~30 GB the first time)"
+echo "[download] target + draft (this pulls ~34 GB the first time)"
 hf download "$TARGET"
 hf download "$DRAFT"
 
@@ -46,4 +47,3 @@ python3 benchmark/bench.py \
 
 echo
 echo "[done] results -> $OUT_DIR/${STAMP}.json"
-echo "Tip: sweep tasks with:  for t in gsm8k humaneval mt-bench; do TASK=\$t bash benchmark/run_cloud_gemma.sh; done"

@@ -9,7 +9,13 @@
 # work end-to-end on this exact software stack before spending on cloud GPU time.
 set -euo pipefail
 
-REPO_DIR="${REPO_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+# Locate the DeepSpec clone (must contain deepspec/ + benchmark/bench.py). Honors $REPO_DIR.
+if [ -z "${REPO_DIR:-}" ]; then
+  _sd="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  if   [ -f "$_sd/../deepspec/__init__.py" ]; then REPO_DIR="$(cd "$_sd/.." && pwd)"
+  elif [ -f "$HOME/DeepSpec/deepspec/__init__.py" ]; then REPO_DIR="$HOME/DeepSpec"
+  else echo "ERROR: set REPO_DIR=/path/to/DeepSpec (the dir containing deepspec/ and benchmark/)"; exit 1; fi
+fi
 cd "$REPO_DIR"
 source .venv/bin/activate
 
