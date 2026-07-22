@@ -1,0 +1,586 @@
+{
+  "devices": [
+    {
+      "device_id": 0,
+      "object_label": "demo phone",
+      "product_id": null,
+      "canonical_xy": [
+        287.39,
+        405.69
+      ],
+      "canonical_bbox": {
+        "x": 267.9,
+        "y": 237.6,
+        "w": 39.0,
+        "h": 168.0
+      },
+      "confidence": 0.95,
+      "detected_in": [
+        "damage_device1"
+      ],
+      "issues": [
+        {
+          "issue_id": 0,
+          "issue_type_id": "demo_unit_power_off",
+          "confidence": 0.95,
+          "bbox_count": 1
+        }
+      ]
+    },
+    {
+      "device_id": 1,
+      "object_label": "demo phone",
+      "product_id": null,
+      "canonical_xy": [
+        346.84,
+        403.92
+      ],
+      "canonical_bbox": {
+        "x": 319.7,
+        "y": 235.7,
+        "w": 50.3,
+        "h": 170.0
+      },
+      "confidence": 0.95,
+      "detected_in": [
+        "damage_device1",
+        "damage_device2"
+      ],
+      "issues": [
+        {
+          "issue_id": 1,
+          "issue_type_id": "demo_unit_power_off",
+          "confidence": 0.95,
+          "bbox_count": 2
+        }
+      ]
+    },
+    {
+      "device_id": 2,
+      "object_label": "demo laptop",
+      "product_id": null,
+      "canonical_xy": [
+        158.37,
+        183.78
+      ],
+      "canonical_bbox": {
+        "x": 121.8,
+        "y": 103.0,
+        "w": 73.0,
+        "h": 80.8
+      },
+      "confidence": 0.9,
+      "detected_in": [
+        "damage_device1"
+      ],
+      "issues": [
+        {
+          "issue_id": 2,
+          "issue_type_id": "demo_unit_power_off",
+          "confidence": 0.9,
+          "bbox_count": 1
+        }
+      ]
+    },
+    {
+      "device_id": 3,
+      "object_label": "demo laptop",
+      "product_id": null,
+      "canonical_xy": [
+        231.37,
+        183.84
+      ],
+      "canonical_bbox": {
+        "x": 194.8,
+        "y": 103.1,
+        "w": 73.0,
+        "h": 80.8
+      },
+      "confidence": 0.9,
+      "detected_in": [
+        "damage_device1"
+      ],
+      "issues": [
+        {
+          "issue_id": 3,
+          "issue_type_id": "demo_unit_power_off",
+          "confidence": 0.9,
+          "bbox_count": 1
+        }
+      ]
+    }
+  ],
+  "products": [],
+  "issues": [
+    {
+      "issue_id": 0,
+      "issue_type_id": "demo_unit_power_off",
+      "product_id": null,
+      "object_label": "demo phone",
+      "canonical_xy": [
+        287.39,
+        405.69
+      ],
+      "merged_confidence": 0.95,
+      "max_confidence": 0.95,
+      "support": {
+        "detected_in": [
+          "damage_device1"
+        ],
+        "visible_in": [
+          "damage_device1"
+        ],
+        "agreement": 1.0
+      },
+      "corroborated": false,
+      "low_support": false,
+      "bbox": {
+        "x": 0.55,
+        "y": 0.35,
+        "w": 0.08,
+        "h": 0.25
+      },
+      "bbox_image_id": "damage_device1",
+      "canonical_bbox": {
+        "x": 267.9,
+        "y": 237.6,
+        "w": 39.0,
+        "h": 168.0
+      },
+      "best_view": "damage_device1",
+      "evidence": "Black demo phone screen in center-right area of table with no visible UI or illumination",
+      "evidence_all": [
+        "Black demo phone screen in center-right area of table with no visible UI or illumination"
+      ],
+      "observations": [
+        {
+          "image_id": "damage_device1",
+          "bbox": {
+            "x": 0.55,
+            "y": 0.35,
+            "w": 0.08,
+            "h": 0.25
+          },
+          "confidence": 0.95,
+          "evidence": "Black demo phone screen in center-right area of table with no visible UI or illumination"
+        }
+      ],
+      "device_id": 0
+    },
+    {
+      "issue_id": 1,
+      "issue_type_id": "demo_unit_power_off",
+      "product_id": null,
+      "object_label": "demo phone",
+      "canonical_xy": [
+        346.84,
+        403.92
+      ],
+      "merged_confidence": 0.95,
+      "max_confidence": 0.95,
+      "support": {
+        "detected_in": [
+          "damage_device1",
+          "damage_device2"
+        ],
+        "visible_in": [
+          "damage_device1",
+          "damage_device2"
+        ],
+        "agreement": 1.0
+      },
+      "corroborated": true,
+      "low_support": false,
+      "bbox": {
+        "x": 0.68,
+        "y": 0.35,
+        "w": 0.08,
+        "h": 0.25
+      },
+      "bbox_image_id": "damage_device1",
+      "canonical_bbox": {
+        "x": 319.7,
+        "y": 235.7,
+        "w": 50.3,
+        "h": 170.0
+      },
+      "best_view": "damage_device1",
+      "evidence": "Black demo phone screen on right side of table with no visible content or power indicator",
+      "evidence_all": [
+        "Black demo phone screen on left side of table with no visible illumination or UI",
+        "Black demo phone screen on right side of table with no visible content or power indicator"
+      ],
+      "observations": [
+        {
+          "image_id": "damage_device1",
+          "bbox": {
+            "x": 0.68,
+            "y": 0.35,
+            "w": 0.08,
+            "h": 0.25
+          },
+          "confidence": 0.95,
+          "evidence": "Black demo phone screen on right side of table with no visible content or power indicator"
+        },
+        {
+          "image_id": "damage_device2",
+          "bbox": {
+            "x": 0.08,
+            "y": 0.35,
+            "w": 0.08,
+            "h": 0.25
+          },
+          "confidence": 0.85,
+          "evidence": "Black demo phone screen on left side of table with no visible illumination or UI"
+        }
+      ],
+      "device_id": 1
+    },
+    {
+      "issue_id": 2,
+      "issue_type_id": "demo_unit_power_off",
+      "product_id": null,
+      "object_label": "demo laptop",
+      "canonical_xy": [
+        158.37,
+        183.78
+      ],
+      "merged_confidence": 0.9,
+      "max_confidence": 0.9,
+      "support": {
+        "detected_in": [
+          "damage_device1"
+        ],
+        "visible_in": [
+          "damage_device1"
+        ],
+        "agreement": 1.0
+      },
+      "corroborated": false,
+      "low_support": false,
+      "bbox": {
+        "x": 0.25,
+        "y": 0.15,
+        "w": 0.15,
+        "h": 0.12
+      },
+      "bbox_image_id": "damage_device1",
+      "canonical_bbox": {
+        "x": 121.8,
+        "y": 103.0,
+        "w": 73.0,
+        "h": 80.8
+      },
+      "best_view": "damage_device1",
+      "evidence": "Laptop with black/dark screen in upper left area of demo table",
+      "evidence_all": [
+        "Laptop with black/dark screen in upper left area of demo table"
+      ],
+      "observations": [
+        {
+          "image_id": "damage_device1",
+          "bbox": {
+            "x": 0.25,
+            "y": 0.15,
+            "w": 0.15,
+            "h": 0.12
+          },
+          "confidence": 0.9,
+          "evidence": "Laptop with black/dark screen in upper left area of demo table"
+        }
+      ],
+      "device_id": 2
+    },
+    {
+      "issue_id": 3,
+      "issue_type_id": "demo_unit_power_off",
+      "product_id": null,
+      "object_label": "demo laptop",
+      "canonical_xy": [
+        231.37,
+        183.84
+      ],
+      "merged_confidence": 0.9,
+      "max_confidence": 0.9,
+      "support": {
+        "detected_in": [
+          "damage_device1"
+        ],
+        "visible_in": [
+          "damage_device1"
+        ],
+        "agreement": 1.0
+      },
+      "corroborated": false,
+      "low_support": false,
+      "bbox": {
+        "x": 0.4,
+        "y": 0.15,
+        "w": 0.15,
+        "h": 0.12
+      },
+      "bbox_image_id": "damage_device1",
+      "canonical_bbox": {
+        "x": 194.8,
+        "y": 103.1,
+        "w": 73.0,
+        "h": 80.8
+      },
+      "best_view": "damage_device1",
+      "evidence": "Laptop with black/dark screen in upper center area of demo table",
+      "evidence_all": [
+        "Laptop with black/dark screen in upper center area of demo table"
+      ],
+      "observations": [
+        {
+          "image_id": "damage_device1",
+          "bbox": {
+            "x": 0.4,
+            "y": 0.15,
+            "w": 0.15,
+            "h": 0.12
+          },
+          "confidence": 0.9,
+          "evidence": "Laptop with black/dark screen in upper center area of demo table"
+        }
+      ],
+      "device_id": 3
+    }
+  ],
+  "counts": {
+    "distinct_devices": 4,
+    "distinct_products": 0,
+    "product_observations": 0,
+    "distinct_issues": 4,
+    "issue_observations": 5,
+    "duplicates_removed": 1,
+    "below_confidence_floor": 0,
+    "low_support_issues": 0
+  },
+  "scale": {
+    "median_product_width_px": 0.0,
+    "product_radius_px": 0.0
+  },
+  "alignment": {
+    "reference_image_id": "damage_device2",
+    "backend": "lightglue",
+    "aligned": [
+      "damage_device1",
+      "damage_device2",
+      "damage_device3"
+    ],
+    "unaligned": [],
+    "canonical_size": [
+      1224,
+      677
+    ],
+    "rms_px": 1.098,
+    "rms_fraction_of_canvas": 0.0009,
+    "trustworthy": true,
+    "unverified_edges": [
+      [
+        "damage_device1",
+        "damage_device2"
+      ],
+      [
+        "damage_device2",
+        "damage_device3"
+      ]
+    ],
+    "capture": {
+      "order": [
+        "damage_device1",
+        "damage_device2",
+        "damage_device3"
+      ],
+      "consecutive_gaps": [
+        {
+          "images": [
+            "damage_device1",
+            "damage_device2"
+          ],
+          "overlap": 0.435,
+          "sufficient": false
+        },
+        {
+          "images": [
+            "damage_device2",
+            "damage_device3"
+          ],
+          "overlap": 0.36,
+          "sufficient": false
+        }
+      ],
+      "weakest_overlap": 0.36,
+      "unverified_edges": [
+        [
+          "damage_device1",
+          "damage_device2"
+        ],
+        [
+          "damage_device2",
+          "damage_device3"
+        ]
+      ],
+      "self_verifying": false,
+      "verdict": "sparse",
+      "advice": [
+        "Only 44% overlap between damage_device1 and damage_device2 \u2014 take an extra photo between them (aim for ~65%).",
+        "Only 36% overlap between damage_device2 and damage_device3 \u2014 take an extra photo between them (aim for ~65%)."
+      ]
+    },
+    "transforms": {
+      "damage_device1": [
+        [
+          1.002828074335282,
+          0.0004185791126066018,
+          0.0
+        ],
+        [
+          0.0015529912494952542,
+          1.0013867205826237,
+          1.9579004377317863
+        ],
+        [
+          3.73335298274283e-06,
+          2.200607339505509e-07,
+          1.0
+        ]
+      ],
+      "damage_device2": [
+        [
+          1.0,
+          0.0,
+          273.00290323519437
+        ],
+        [
+          0.0,
+          1.0,
+          2.5538716029096316
+        ],
+        [
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "damage_device3": [
+        [
+          1.0163003485166122,
+          -0.006013485108484833,
+          649.8107718289118
+        ],
+        [
+          0.005038502397275747,
+          0.9984014123897768,
+          0.0
+        ],
+        [
+          2.0883964461174478e-05,
+          -7.655966528224435e-06,
+          1.0
+        ]
+      ]
+    },
+    "pairs": [
+      {
+        "src": 0,
+        "dst": 1,
+        "matches": 473,
+        "inliers": 464,
+        "inlier_ratio": 0.981,
+        "photometric": 0.9988,
+        "accepted": true,
+        "reason": "ok"
+      },
+      {
+        "src": 0,
+        "dst": 2,
+        "matches": 20,
+        "inliers": 0,
+        "inlier_ratio": 0.0,
+        "photometric": null,
+        "accepted": false,
+        "reason": "too_few_matches"
+      },
+      {
+        "src": 1,
+        "dst": 2,
+        "matches": 479,
+        "inliers": 467,
+        "inlier_ratio": 0.9749,
+        "photometric": 0.9849,
+        "accepted": true,
+        "reason": "ok"
+      }
+    ],
+    "overlaps": [
+      {
+        "images": [
+          "damage_device1",
+          "damage_device2"
+        ],
+        "area_px": 142244.9,
+        "fraction_of_a": 0.435,
+        "fraction_of_b": 0.366,
+        "polygon": [
+          [
+            486.5,
+            2.7
+          ],
+          [
+            386.7,
+            2.6
+          ],
+          [
+            273.0,
+            2.6
+          ],
+          [
+            273.0,
+            668.6
+          ],
+          [
+            486.7,
+            668.6
+          ],
+          [
+            486.5,
+            2.7
+          ]
+        ]
+      },
+      {
+        "images": [
+          "damage_device2",
+          "damage_device3"
+        ],
+        "area_px": 138222.4,
+        "fraction_of_a": 0.355,
+        "fraction_of_b": 0.36,
+        "polygon": [
+          [
+            857.0,
+            668.6
+          ],
+          [
+            857.0,
+            2.6
+          ],
+          [
+            649.8,
+            2.6
+          ],
+          [
+            649.1,
+            668.6
+          ],
+          [
+            857.0,
+            668.6
+          ]
+        ]
+      }
+    ]
+  }
+}

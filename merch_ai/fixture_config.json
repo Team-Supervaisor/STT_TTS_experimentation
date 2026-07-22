@@ -1,0 +1,308 @@
+{
+  "fixture_types": [
+    {
+      "id": "premium_endcap",
+      "name": "Premium endcap",
+      "description": "Aisle-end branded fixture with hero products, POSM, and price communication.",
+      "intake_questions": [
+        {
+          "id": "store_name",
+          "prompt": "Store name or number",
+          "expected_format": "Retailer + store id",
+          "required": true
+        },
+        {
+          "id": "aisle_or_bay",
+          "prompt": "Aisle or bay location",
+          "expected_format": "Short location note"
+        }
+      ]
+    },
+    {
+      "id": "demo_table",
+      "name": "Demo table",
+      "description": "Interactive product table with powered demo units and supporting accessories.",
+      "intake_questions": [
+        {
+          "id": "store_name",
+          "prompt": "Store name or number",
+          "expected_format": "Retailer + store id",
+          "required": true
+        },
+        {
+          "id": "demo_status",
+          "prompt": "Demo loop or app status",
+          "expected_format": "Working / degraded / offline"
+        }
+      ]
+    },
+    {
+      "id": "shelf_bay",
+      "name": "Shelf bay",
+      "description": "Inline shelf or wall bay with planogram facings, pricing, and competitor adjacency."
+    },
+    {
+      "id": "wall_display",
+      "name": "Wall display",
+      "description": "Large-format branded wall, pegboard, or locked display with product facings."
+    }
+  ],
+  "issue_taxonomy": [
+    {
+      "id": "demo_unit_power_off",
+      "label": "Demo unit powered off",
+      "category": "demo_experience",
+      "expected_state": "All demo units should be powered on with a visible home screen, loop, or lock screen.",
+      "failure_modes": [
+        "screen is black or blank",
+        "demo product is unplugged",
+        "demo loop is not running"
+      ],
+      "detection_signals": {
+        "image_cues": [
+          "black device screen",
+          "blank display",
+          "missing power cable",
+          "unlit demo unit"
+        ],
+        "voice_cues": [
+          "powered off",
+          "screen is black",
+          "not working",
+          "demo is dead"
+        ]
+      },
+      "severity_weight": 12,
+      "troubleshooting_steps": [
+        "Check power and security cable",
+        "Restart demo loop",
+        "Escalate repeated outage"
+      ]
+    },
+    {
+      "id": "planogram_deviation",
+      "label": "Planogram deviation",
+      "category": "merchandising",
+      "expected_state": "Products, facings, shelf positions, and accessory locations match the planogram.",
+      "failure_modes": [
+        "wrong product in bay",
+        "missing facing",
+        "relocated product",
+        "empty hook or pedestal"
+      ],
+      "detection_signals": {
+        "image_cues": [
+          "empty shelf slot",
+          "mismatched facings",
+          "product placed in wrong bay",
+          "gap in lineup"
+        ],
+        "voice_cues": [
+          "not to planogram",
+          "wrong bay",
+          "missing facing",
+          "empty hook"
+        ]
+      },
+      "severity_weight": 10
+    },
+    {
+      "id": "competitor_in_bay",
+      "label": "Competitor product in brand space",
+      "category": "competitive",
+      "expected_state": "The branded bay should contain only approved products, POSM, and attachments.",
+      "failure_modes": [
+        "competitor SKU in bay",
+        "competitor shelf talker beside hero product",
+        "unauthorized brand adjacency"
+      ],
+      "detection_signals": {
+        "image_cues": [
+          "different brand logo in bay",
+          "competitor packaging inside fixture",
+          "competitor sign on display"
+        ],
+        "voice_cues": [
+          "competitor in our bay",
+          "wrong brand",
+          "Bose display",
+          "Samsung sign"
+        ]
+      },
+      "severity_weight": 12
+    },
+    {
+      "id": "price_tag_missing_or_wrong",
+      "label": "Missing or wrong price tag",
+      "category": "pricing",
+      "expected_state": "Every sellable product has a current visible price tag or approved promotion label.",
+      "failure_modes": [
+        "missing price card",
+        "price card does not match product",
+        "old promotion still displayed"
+      ],
+      "detection_signals": {
+        "image_cues": [
+          "blank shelf edge",
+          "missing price rail tag",
+          "price card crossed out",
+          "promo date expired"
+        ],
+        "voice_cues": [
+          "price missing",
+          "wrong price",
+          "old promo",
+          "no tag"
+        ]
+      },
+      "severity_weight": 8
+    },
+    {
+      "id": "posm_missing_or_damaged",
+      "label": "POSM missing or damaged",
+      "category": "brand_compliance",
+      "expected_state": "Approved signage, shelf talkers, QR cards, and campaign assets are present and clean.",
+      "failure_modes": [
+        "brand wordmark missing",
+        "torn shelf talker",
+        "campaign asset absent",
+        "QR card removed"
+      ],
+      "detection_signals": {
+        "image_cues": [
+          "torn sign",
+          "missing logo panel",
+          "blank signage holder",
+          "damaged POSM"
+        ],
+        "voice_cues": [
+          "signage missing",
+          "wordmark missing",
+          "torn POSM",
+          "campaign card gone"
+        ]
+      },
+      "severity_weight": 7
+    },
+    {
+      "id": "stockout_empty_facings",
+      "label": "Stockout or empty facings",
+      "category": "stock_health",
+      "expected_state": "Hero products and priority SKUs have available sellable inventory on shelf.",
+      "failure_modes": [
+        "empty facings",
+        "low stock on hero SKU",
+        "only display unit left",
+        "backstock not replenished"
+      ],
+      "detection_signals": {
+        "image_cues": [
+          "empty shelves",
+          "empty hooks",
+          "single unit remaining",
+          "out of stock tag"
+        ],
+        "voice_cues": [
+          "stocked out",
+          "empty shelf",
+          "only demo left",
+          "needs replenishment"
+        ]
+      },
+      "severity_weight": 11
+    },
+    {
+      "id": "obstructed_visibility",
+      "label": "Product or brand visibility obstructed",
+      "category": "visibility",
+      "expected_state": "Hero products, brand marks, and key claims are visible from the shopper aisle.",
+      "failure_modes": [
+        "boxes blocking fixture",
+        "accessory pile covering product",
+        "brand panel hidden",
+        "product below shelf line"
+      ],
+      "detection_signals": {
+        "image_cues": [
+          "boxes in front of display",
+          "clutter over product",
+          "blocked logo",
+          "low product placement"
+        ],
+        "voice_cues": [
+          "blocked",
+          "not visible",
+          "cluttered",
+          "below shelf line"
+        ]
+      },
+      "severity_weight": 9
+    },
+    {
+      "id": "safety_or_cable_issue",
+      "label": "Safety cable or power issue",
+      "category": "field_ops",
+      "expected_state": "Security, power, and cable routing should be tidy, safe, and operational.",
+      "failure_modes": [
+        "loose cable",
+        "missing security tether",
+        "exposed power strip",
+        "tripping hazard"
+      ],
+      "detection_signals": {
+        "image_cues": [
+          "loose wire",
+          "dangling cable",
+          "exposed extension cord",
+          "missing tether"
+        ],
+        "voice_cues": [
+          "loose cable",
+          "security tether missing",
+          "trip hazard",
+          "power strip exposed"
+        ]
+      },
+      "severity_weight": 10
+    },
+    {
+      "id": "cleanliness_or_damage",
+      "label": "Fixture dirty or damaged",
+      "category": "store_condition",
+      "expected_state": "Fixture surfaces, screens, and signage are clean, intact, and presentable.",
+      "failure_modes": [
+        "dusty surface",
+        "cracked acrylic",
+        "scratched display",
+        "trash on fixture"
+      ],
+      "detection_signals": {
+        "image_cues": [
+          "dust",
+          "fingerprints",
+          "cracked fixture",
+          "trash",
+          "broken acrylic"
+        ],
+        "voice_cues": [
+          "dirty",
+          "damaged",
+          "scratched",
+          "broken",
+          "needs cleaning"
+        ]
+      },
+      "severity_weight": 5
+    }
+  ],
+  "intel_categories": [
+    "competitor",
+    "stock",
+    "pricing",
+    "store_ops",
+    "shopper_feedback"
+  ],
+  "scoring": {
+    "methodology_version": "local-v1"
+  }
+}

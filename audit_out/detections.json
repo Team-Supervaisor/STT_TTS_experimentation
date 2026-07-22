@@ -1,0 +1,108 @@
+{
+  "provider": "anthropic",
+  "model": "claude-haiku-4-5",
+  "baseUrl": "https://api.anthropic.com/v1",
+  "results": [
+    {
+      "image_id": "damage_device1",
+      "caption": "Demo table with multiple demo phones and laptops; several phone screens are black or off.",
+      "detected_issues": [
+        {
+          "issue_type_id": "demo_unit_power_off",
+          "confidence": 0.95,
+          "evidence": "Black demo phone screen in center-right area of table with no visible UI or illumination",
+          "object_label": "demo phone",
+          "bbox": {
+            "x": 0.55,
+            "y": 0.35,
+            "w": 0.08,
+            "h": 0.25
+          },
+          "polygon": null
+        },
+        {
+          "issue_type_id": "demo_unit_power_off",
+          "confidence": 0.95,
+          "evidence": "Black demo phone screen on right side of table with no visible content or power indicator",
+          "object_label": "demo phone",
+          "bbox": {
+            "x": 0.68,
+            "y": 0.35,
+            "w": 0.08,
+            "h": 0.25
+          },
+          "polygon": null
+        },
+        {
+          "issue_type_id": "demo_unit_power_off",
+          "confidence": 0.9,
+          "evidence": "Laptop with black/dark screen in upper left area of demo table",
+          "object_label": "demo laptop",
+          "bbox": {
+            "x": 0.25,
+            "y": 0.15,
+            "w": 0.15,
+            "h": 0.12
+          },
+          "polygon": null
+        },
+        {
+          "issue_type_id": "demo_unit_power_off",
+          "confidence": 0.9,
+          "evidence": "Laptop with black/dark screen in upper center area of demo table",
+          "object_label": "demo laptop",
+          "bbox": {
+            "x": 0.4,
+            "y": 0.15,
+            "w": 0.15,
+            "h": 0.12
+          },
+          "polygon": null
+        }
+      ]
+    },
+    {
+      "image_id": "damage_device2",
+      "caption": "Demo table with tablets and phones displaying content; most devices are powered on with visible screens.",
+      "detected_issues": [
+        {
+          "issue_type_id": "demo_unit_power_off",
+          "confidence": 0.85,
+          "evidence": "Black demo phone screen on left side of table with no visible illumination or UI",
+          "object_label": "demo phone",
+          "bbox": {
+            "x": 0.08,
+            "y": 0.35,
+            "w": 0.08,
+            "h": 0.25
+          },
+          "polygon": null
+        }
+      ]
+    },
+    {
+      "image_id": "damage_device3",
+      "caption": "Wide view of demo table area with tablets, phones, and accessories displayed; most devices are powered on.",
+      "detected_issues": []
+    }
+  ],
+  "localizer": {
+    "configured": false,
+    "reachable": false,
+    "refined": 0,
+    "total": 5,
+    "verified": 0,
+    "flagged_false_positive": 0
+  },
+  "detector_first": {
+    "enabled": false,
+    "mode": "merged_set_of_marks",
+    "ran": false,
+    "labels": [],
+    "candidates": 0,
+    "issues": 0,
+    "cleared": 0,
+    "rejected_not_object": 0,
+    "bad_box": 0
+  }
+}
